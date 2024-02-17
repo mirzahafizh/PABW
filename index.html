@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="login-form">
+            <h1>Login</h1>
+            <form action="#" onsubmit="return validateForm()"> <!-- Tambahkan onsubmit di sini -->
+                <input type="text" id="username" placeholder="Username" required> <!-- Tambahkan id untuk username -->
+                <input type="password" id="password" placeholder="Password" required> <!-- Tambahkan id untuk password -->
+                <div class="forgot-remember">
+                    <div class="remember-me">
+                        <input type="checkbox" id="remember-me">
+                        <label for="remember-me">Remember me</label>
+                    </div>
+                    <div>
+                        <a href="#" class="daftar">Daftar disini</a> <!-- Tambahkan class "daftar" -->
+                    </div>
+
+                </div>
+                <input type="submit" value="Login">
+                <!-- <div>
+                    <a class="daftar" href="#">Daftar disini</a>
+                </div> -->
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Function to set "Remember me" checkbox based on localStorage value
+        function setRememberMeCheckbox() {
+            var rememberMeCheckbox = document.getElementById("remember-me");
+            var rememberMeChecked = localStorage.getItem("rememberMeChecked");
+
+            if (rememberMeChecked === "true") {
+                rememberMeCheckbox.checked = true;
+                document.getElementById("username").value = localStorage.getItem("rememberedUsername");
+                document.getElementById("password").value = localStorage.getItem("rememberedPassword");
+            } else {
+                rememberMeCheckbox.checked = false;
+            }
+        }
+
+        // Function to handle form submission
+        function validateForm() {
+            var username = document.getElementById("username").value;
+            var password = document.getElementById("password").value;
+            var rememberMeCheckbox = document.getElementById("remember-me");
+
+            // If "Remember me" checkbox is checked, store the username and password in localStorage
+            if (rememberMeCheckbox.checked) {
+                localStorage.setItem("rememberMeChecked", "true");
+                localStorage.setItem("rememberedUsername", username);
+                localStorage.setItem("rememberedPassword", password);
+            } else {
+                localStorage.setItem("rememberMeChecked", "false");
+                localStorage.removeItem("rememberedUsername");
+                localStorage.removeItem("rememberedPassword");
+            }
+
+            // Perform validation as before
+            if (username === "admin" && password === "admin") {
+                alert("Login berhasil!");
+                return true;
+            } else {
+                alert("Username atau password salah. Silakan coba lagi.");
+                return false;
+            }
+        }
+
+        // Function to toggle between login and registration forms
+        function toggleForm() {
+            var loginForm = document.querySelector('.login-form');
+            loginForm.innerHTML = `
+                <h1>Registration</h1>
+                <form action="#" onsubmit="return registerUser()">
+                    <input type="text" id="newUsername" placeholder="New Username" required>
+                    <input type="password" id="newPassword" placeholder="New Password" required>
+                    <input type="submit" value="Register">
+                </form>
+                <button onclick="backToLogin()">Back to Login</button>
+            `;
+        }
+
+        // Function to switch back to login form
+        function backToLogin() {
+            var loginForm = document.querySelector('.login-form');
+            loginForm.innerHTML = `
+                <h1>Login</h1>
+                <form action="#" onsubmit="return validateForm()">
+                    <input type="text" id="username" placeholder="Username" required>
+                    <input type="password" id="password" placeholder="Password" required>
+                    <div class="forgot-remember">
+                        <div class="remember-me">
+                            <input type="checkbox" id="remember-me">
+                            <label for="remember-me">Remember me</label>
+                        </div>
+                        <div>
+                            <a href="#" class="daftar">Daftar disini</a>
+                        </div>
+                    </div>
+                    <input type="submit" value="Login">
+                </form>
+            `;
+            
+            // Add event listener to the "Daftar disini" link again
+            document.querySelector('.daftar').addEventListener('click', function(event) {
+                event.preventDefault(); // Prevent the default link behavior
+                toggleForm(); // Toggle to registration form
+            });
+        }
+
+        // Function to handle registration
+        function registerUser() {
+            var newUsername = document.getElementById("newUsername").value;
+            var newPassword = document.getElementById("newPassword").value;
+
+            // Perform registration process (you can modify this part as needed)
+            // For demonstration purposes, let's just log the new username and password
+            console.log("New Username:", newUsername);
+            console.log("New Password:", newPassword);
+
+            // You can add further processing here, such as storing the new user data
+            // Return false to prevent the form from submitting in this example
+            return false;
+        }
+
+        // Add event listener to the "Daftar disini" link
+        document.querySelector('.daftar').addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent the default link behavior
+            toggleForm(); // Toggle to registration form
+        });
+
+        // Set the "Remember me" checkbox when the page loads
+        window.onload = function() {
+            setRememberMeCheckbox();
+        };
+    </script>
+</body>
+</html>
