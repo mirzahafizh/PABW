@@ -100,7 +100,4 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 </html>
 
-<?php
-// Close the database connection
-$conn->close();
-?>
+

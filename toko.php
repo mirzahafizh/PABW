@@ -3,19 +3,31 @@ session_start();
 
 require_once "config.php";
 
-function addProduct($pdo, $name, $price, $description, $photo)
+function addProduct($pdo, $id_toko, $store_name, $name, $price, $description, $photo, $stock)
 {
-    $query = "INSERT INTO products (name, price, description, photo) VALUES (?, ?, ?, ?)";
+    $query = "INSERT INTO products (id_toko, store_name, name, price, description, photo, stock) VALUES (?, ?, ?, ?, ?, ?, ?)";
     $statement = $pdo->prepare($query);
-    $statement->execute([$name, $price, $description, $photo]);
+    $statement->execute([$id_toko, $store_name, $name, $price, $description, $photo, $stock]);
 }
 
-function addStoreInfo($pdo, $storeName, $storeField)
+function addStoreInfo($pdo, $username, $storeName, $storeField, $storeAddress)
 {
-    $query = "INSERT INTO store_info (store_name, store_field) VALUES (?, ?)";
-    $statement = $pdo->prepare($query);
-    $statement->execute([$storeName, $storeField]);
+    $queryUserId = "SELECT id FROM tb_user WHERE username = ?";
+    $statementUserId = $pdo->prepare($queryUserId);
+    $statementUserId->execute([$username]);
+    $user = $statementUserId->fetch(PDO::FETCH_ASSOC);
+
+    if ($user) {
+        $userId = $user['id'];
+
+        $queryStoreInfo = "INSERT INTO store_info (id, username, store_name, store_field, store_address) VALUES (?, ?, ?, ?, ?)";
+        $statementStoreInfo = $pdo->prepare($queryStoreInfo);
+        $statementStoreInfo->execute([$userId, $username, $storeName, $storeField, $storeAddress]);
+    } else {
+        echo '<script>alert("User not found.");</script>';
+    }
 }
+
 
 // Check if the store information exists
 $queryCheckStore = "SELECT * FROM store_info";
@@ -23,15 +35,23 @@ $statementCheckStore = $pdo->prepare($queryCheckStore);
 $statementCheckStore->execute();
 $storeInfo = $statementCheckStore->fetch(PDO::FETCH_ASSOC);
 
-// Proses tambah informasi toko jika form disubmit
+
+// Check if the store information exists
+$queryCheckStore = "SELECT * FROM store_info";
+$statementCheckStore = $pdo->prepare($queryCheckStore);
+$statementCheckStore->execute();
+$storeInfo = $statementCheckStore->fetch(PDO::FETCH_ASSOC);
+
 if (isset($_POST['tambah_info_toko'])) {
     $storeName = $_POST['store_name'];
     $storeField = $_POST['store_field'];
+    $storeAddress = $_POST['store_address'];
 
-    // Add store information to the database
-    addStoreInfo($pdo, $storeName, $storeField);
+    $username = $_SESSION['username'];
 
-    // Refresh the page to reflect the changes
+    addStoreInfo($pdo, $username, $storeName, $storeField, $storeAddress);
+
+    echo '<script>alert("Informasi toko berhasil ditambahkan.");</script>';
     header("Location: toko.php");
     exit();
 }
@@ -41,62 +61,66 @@ if (isset($_POST['tambah_produk'])) {
     $product_name = $_POST['product_name'];
     $product_price = $_POST['product_price'];
     $product_description = $_POST['product_description'];
+    $product_stock = $_POST['product_stock']; // Assuming you have an input field for stock
 
-    // Handle file upload only if a file is selected
-    if (!empty($_FILES["product_photo"]["name"])) {
-        $targetDirectory = "barang/";
-        $targetFile = $targetDirectory . basename($_FILES["product_photo"]["name"]);
-        
+
+    // Assuming you have $username available
+    $username = $_SESSION['username'];
+
+    // Fetch id_toko and store_name from store_info based on the username
+    $queryStoreInfo = "SELECT id_toko, store_name FROM store_info WHERE username = ?";
+    $statementStoreInfo = $pdo->prepare($queryStoreInfo);
+    $statementStoreInfo->execute([$username]);
+    $storeInfoRow = $statementStoreInfo->fetch(PDO::FETCH_ASSOC);
+
+    // Check if store_info exists for the given username
+    if ($storeInfoRow) {
+        $id_toko = $storeInfoRow['id_toko'];
+        $store_name = $storeInfoRow['store_name'];
+
+        // Initialize $uploadOk
         $uploadOk = 1;
-        $imageFileType = strtolower(pathinfo($targetFile, PATHINFO_EXTENSION));
+        // Handle file upload only if a file is selected
+        if (!empty($_FILES["product_photo"]["name"])) {
+            $targetDirectory = "barang/";
+            $targetFile = $targetDirectory . basename($_FILES["product_photo"]["name"]);
 
-        // Check if the file is an actual image
-        $check = getimagesize($_FILES["product_photo"]["tmp_name"]);
-        if ($check !== false) {
-            $uploadOk = 1;
-        } else {
-            echo "File is not an image.";
-            $uploadOk = 0;
-        }
+            // ... (rest of the file upload code)
 
-        // Check if file already exists
-        if (file_exists($targetFile)) {
-            echo "Sorry, file already exists.";
-            $uploadOk = 0;
-        }
-
-        // Check file size
-        if ($_FILES["product_photo"]["size"] > 500000) {
-            echo "Sorry, your file is too large.";
-            $uploadOk = 0;
-        }
-
-        // Allow certain file formats
-        $allowedFormats = ["jpg", "jpeg", "png", "gif"];
-        if (!in_array($imageFileType, $allowedFormats)) {
-            echo "Sorry, only JPG, JPEG, PNG, and GIF files are allowed.";
-            $uploadOk = 0;
-        }
-
-        // Check if $uploadOk is set to 0 by an error
-        if ($uploadOk == 0) {
-            echo "Sorry, your file was not uploaded.";
-        } else {
-            // If everything is ok, try to upload file
-            if (move_uploaded_file($_FILES["product_photo"]["tmp_name"], $targetFile)) {
-                echo "The file " . htmlspecialchars(basename($_FILES["product_photo"]["name"])) . " has been uploaded.";
-
-                // Add product to the database with the file name
-                addProduct($pdo, $product_name, $product_price, $product_description, basename($_FILES["product_photo"]["name"]));
+            if ($uploadOk == 0) {
+                echo '<script>alert("Sorry, your file was not uploaded.");</script>';
             } else {
-                echo "Sorry, there was an error uploading your file.";
+                // If everything is ok, try to upload file
+                if (move_uploaded_file($_FILES["product_photo"]["tmp_name"], $targetFile)) {
+                    echo '<script>alert("The file ' . htmlspecialchars(basename($_FILES["product_photo"]["name"])) . ' has been uploaded.");</script>';
+
+                    // Add product to the database with the file name
+                    addProduct($pdo, $id_toko, $store_name, $product_name, $product_price, $product_description, basename($_FILES["product_photo"]["name"]), $product_stock);
+
+                } else {
+                    echo '<script>alert("Sorry, there was an error uploading your file.");</script>';
+                }
             }
+        } else {
+            // If no file is selected, add the product without a photo
+            addProduct($pdo, $id_toko, $store_name, $product_name, $product_price, $product_description,$stock, null);
+
+            // Show a JavaScript alert
+            echo '<script>alert("Produk berhasil ditambahkan.");</script>';
         }
     } else {
-        // If no file is selected, add the product without a photo
-        addProduct($pdo, $product_name, $product_price, $product_description, null);
+        // Handle the case where store_info doesn't exist for the given username
+        echo '<script>alert("User not found.");</script>';
     }
 }
+
+
+
+
+// ... (rest of your code)
+
+
+
 
 function formatRupiah($price)
 {
@@ -142,22 +166,40 @@ $products = $statement->fetchAll(PDO::FETCH_ASSOC);
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Toko Page</title>
+    <title>MS STORE</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-
 </head>
 
 <body class="bg-gray-100 p-6">
     <?php include "navbar.php"; ?>
 
-    <h1 class="text-3xl font-bold mb-4 mt-[60px]">Informasi Toko</h1>
-    
+    <h1 class="text-3xl font-bold mb-4 mt-[80px]">Informasi Toko</h1>
 
-    <?php if (!$storeInfo) : ?>
-        <!-- Form for adding store information if it doesn't exist -->
+    <?php
+    $username = $_SESSION['username'];
+    $queryCheckStore = "SELECT * FROM store_info WHERE username = ?";
+    $statementCheckStore = $pdo->prepare($queryCheckStore);
+    $statementCheckStore->execute([$username]);
+    $storeInfo = $statementCheckStore->fetch(PDO::FETCH_ASSOC);
+
+    if (!$storeInfo) {
+        if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['tambah_info_toko'])) {
+            $storeName = $_POST['store_name'];
+            $storeField = $_POST['store_field'];
+            $storeAddress = $_POST['store_address'];
+
+            $username = $_SESSION['username'];
+
+            addStoreInfo($pdo, $username, $storeName, $storeField, $storeAddress);
+
+            echo '<script>alert("Informasi toko berhasil ditambahkan.");</script>';
+            header("Location: toko.php");
+            exit();
+        }
+        ?>
         <form method="post" action="" class="mb-8">
             <div class="mb-4">
                 <label for="store_name" class="block text-sm font-medium text-gray-700">Nama Toko:</label>
@@ -169,11 +211,20 @@ $products = $statement->fetchAll(PDO::FETCH_ASSOC);
                 <input type="text" name="store_field" required class="border rounded px-3 py-2 w-full">
             </div>
 
+            <div class="mb-4">
+                <label for="store_address" class="block text-sm font-medium text-gray-700">Alamat Toko:</label>
+                <textarea name="store_address" required class="border rounded px-3 py-2 w-full"></textarea>
+            </div>
+
             <button type="submit" name="tambah_info_toko" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">Tambah Informasi Toko</button>
         </form>
-    <?php else : ?>
-        <p class="mb-8">Toko: <?= $storeInfo['store_name']; ?> | Bidang: <?= $storeInfo['store_field']; ?></p>
-    <?php endif; ?>
+    <?php
+    } else {
+        echo '<p class="mb-8">Toko: ' . $storeInfo['store_name'] . ' | Bidang: ' . $storeInfo['store_field'] . ' | Alamat: ' . $storeInfo['store_address'] . '</p>';
+    }
+    ?>
+
+
 
     <h2 class="text-2xl mb-4">Tambah Produk</h2>
     <form method="post" action="" enctype="multipart/form-data" class="mb-8">
@@ -193,26 +244,46 @@ $products = $statement->fetchAll(PDO::FETCH_ASSOC);
         </div>
 
         <div class="mb-4">
+            <label for="product_stock" class="block text-sm font-medium text-gray-700">Stok:</label>
+            <input type="number" name="product_stock" required class="border rounded px-3 py-2 w-full">
+        </div>
+
+        <div class="mb-4">
             <label for="product_photo" class="block text-sm font-medium text-gray-700">Foto Produk:</label>
             <input type="file" name="product_photo" accept="image/*" required class="border rounded px-3 py-2 w-full">
         </div>
+
+
 
         <button type="submit" name="tambah_produk" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">Tambah Produk</button>
     </form>
 
     <h2 class="text-2xl mb-4">Daftar Produk</h2>
-    <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-6">
-        <?php foreach ($products as $product) : ?>
-            <div class="bg-white rounded-lg shadow-md">
-                <?php if ($product['photo']) : ?>
-                    <img src="barang/<?= $product['photo']; ?>" alt="<?= $product['name']; ?>" class="w-full h-[120px] fluid">
-                <?php endif; ?>
-                <div class="p-6">
-                    <h3 class="text-xl font-bold mb-2"><?= $product['name']; ?></h3>
-                    <p class="text-gray-800 "><?= formatRupiah($product['price']); ?></p>
+    <?php
+        // Fetch products based on the logged-in user's store information
+        $username = $_SESSION['username'];
+        $queryProducts = "SELECT products.* FROM products JOIN store_info ON products.id_toko = store_info.id_toko WHERE store_info.username = ?";
+        $statementProducts = $pdo->prepare($queryProducts);
+        $statementProducts->execute([$username]);
+        $products = $statementProducts->fetchAll(PDO::FETCH_ASSOC);
+        ?>
+
+        <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-6">
+            <?php foreach ($products as $product) : ?>
+                <div class="bg-white  shadow-md">
+                    <?php if ($product['photo']) : ?>
+                        <img src="barang/<?= $product['photo']; ?>" alt="<?= $product['name']; ?>" class="w-full h-[120px] fluid">
+                    <?php endif; ?>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-2"><?= $product['name']; ?></h3>
+                        <p class="text-gray-800"><?= formatRupiah($product['price']); ?></p>
+                        <p class="text-gray-800">Stock: <?= $product['stock']; ?></p> <!-- Display stock -->
+                    </div>
                 </div>
-            </div>
-        <?php endforeach; ?>
+            <?php endforeach; ?>
+        </div>
+
+
     </div>
 
 </body>

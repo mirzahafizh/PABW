@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_user'])) {
 <body class="bg-gray-200">
 
     <!-- Sidebar -->
-    <div class="flex h-full w-[1280px] bg-gray-800 text-white">
+    <div class="flex h-full w-[1520px] bg-gray-800 text-white">
         <div class="flex-shrink-0 w-64 bg-gray-700">
             <div class="p-4">
                 <h2 class="text-2xl font-bold">Admin Panel</h2>

@@ -12,21 +12,23 @@ include "config.php";
 
 // Ambil informasi pengguna dari sesi
 $username = $_SESSION['username'];
-$phone ='';
+$phone = '';
 $email = '';
 $fullname = '';
-$profile_image = ''; // Tambahkan variabel untuk menyimpan lokasi file foto profil
+$profile_image = '';
+$address = ''; // Tambahkan variabel untuk alamat
 
-// Ambil email dan lokasi foto profil berdasarkan username
-$stmt = $pdo->prepare("SELECT email, profile_image, phone, fullname FROM tb_user WHERE username = ?");
+// Ambil email, lokasi foto profil, dan alamat berdasarkan username
+$stmt = $pdo->prepare("SELECT email, profile_image, phone, fullname, address FROM tb_user WHERE username = ?");
 $stmt->execute([$username]);
 $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if ($row) {
     $email = $row['email'];
-    $profile_image = $row['profile_image']; // Simpan lokasi file foto profil ke dalam variabel
+    $profile_image = $row['profile_image'];
     $phone = $row['phone'];
     $fullname = $row['fullname'];
+    $address = $row['address']; // Simpan alamat ke dalam variabel
 }
 
 // Proses logout ketika tombol logout ditekan
@@ -44,8 +46,7 @@ if (isset($_POST['logout'])) {
 include "config.php";
 
 $username = $_SESSION['username'];
-$role ='';
-
+$role = '';
 
 // Ambil email dan lokasi foto profil berdasarkan username
 $stmt = $pdo->prepare("SELECT role FROM tb_user WHERE username = ?");
@@ -54,10 +55,39 @@ $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if ($row) {
     $role = $row['role'];
+}
 
+// Handle file upload logic
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['profile_image'])) {
+    $uploadDir = 'uploads/'; // Directory to store uploaded files
+    $uploadFile = $uploadDir . basename($_FILES['profile_image']['name']);
+
+    if (move_uploaded_file($_FILES['profile_image']['tmp_name'], $uploadFile)) {
+        // Update the profile_image field in the database with the new file location
+        $updateImageStmt = $pdo->prepare("UPDATE tb_user SET profile_image = ? WHERE username = ?");
+        $updateImageStmt->execute([$uploadFile, $username]);
+
+        // Redirect to avoid re-uploading on page refresh
+        header("Location: profile.php");
+        exit();
+    } else {
+        echo '<script>alert("Error uploading file.");</script>';
+    }
+}
+
+// Handle address update logic
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_address'])) {
+    $newAddress = $_POST['address'];
+
+    // Update the address field in the database
+    $updateAddressStmt = $pdo->prepare("UPDATE tb_user SET address = ? WHERE username = ?");
+    $updateAddressStmt->execute([$newAddress, $username]);
+
+    // Refresh the page
+    header("Location: profile.php");
+    exit();
 }
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -70,7 +100,7 @@ if ($row) {
 </head>
 
 <body class="bg-gray-100">
-<?php include "navbar.php"; ?>
+    <?php include "navbar.php"; ?>
 
     <div class="container mx-auto py-8 mt-20">
         <div class="max-w-md mx-auto bg-white p-8 rounded-md shadow-md">
@@ -82,18 +112,30 @@ if ($row) {
                     <?php else: ?>
                         <img src="assets/gg_profile.png" alt="User Avatar" class="w-24 h-24 mx-auto rounded-full mb-4">
                     <?php endif; ?>
-                    <input type="file" name="profile_image" accept="image/*" class="block mx-auto mb-4">
+                    <div class="flex items-center mb-2">
+                        <input type="file" name="profile_image" accept="image/*" class="block mr-2">
+                        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none">
+                            Upload
+                        </button>
+                    </div>
                     <h2 class="text-xl font-semibold mb-2"><?php echo $fullname; ?></h2>
-                    <p class="text-gray-600 mb-4"><?php echo $email; ?> <a href="ubah_email.php">(Ubah)</a></p>
-                    <p class="text-gray-600 mb-4"><?php echo $phone; ?> <a href="ubah_telepon.php">(Ubah)</a></p>
+                    <p class="text-gray-600 mb-4"><?php echo $email; ?> <a href="ubah_email.php" class="text-blue-400">ubah</a></p>
+                    <p class="text-gray-600 mb-4"><?php echo $phone; ?> <a href="ubah_telepon.php" class="text-blue-400">ubah</a></p>
+                    <!-- Display the address -->
+                    <p class="text-gray-600 mb-4">
+                        <?php if (!empty($address)): ?>
+                            <?php echo $address; ?> <a href="ubah_alamat.php" class="text-blue-400">ubah</a>
+                        <?php else: ?>
+                            <input type="text" name="address" placeholder="Tambahkan alamat" class="border rounded px-3 py-2">
+                            <button type="submit" name="update_address" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none">
+                                Tambahkan
+                            </button>
+                        <?php endif; ?>
+                    </p>
                 </form>
             </div>
         </div>
     </div>
-    <script>
-
-        
-    </script>
 </body>
 
 </html>

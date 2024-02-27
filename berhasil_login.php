@@ -7,6 +7,11 @@ if (!isset($_SESSION['username'])) {
     exit();
 }
 
+function formatRupiah($price)
+{
+    return 'Rp' . number_format($price, 0, ',', '.');
+}
+
 // Sisipkan file koneksi ke database
 include "config.php";
 
@@ -35,8 +40,10 @@ if (isset($_POST['logout'])) {
     header("Location: login.php");
     exit();
 }
+// Ambil data produk dari database
+$stmtProducts = $pdo->query("SELECT * FROM products ORDER BY id_produk DESC LIMIT 8");
+$products = $stmtProducts->fetchAll(PDO::FETCH_ASSOC);
 ?>
-
 
 
 <!DOCTYPE html>
@@ -66,7 +73,7 @@ if (isset($_POST['logout'])) {
     <?php include "navbar.php"; ?>
 
 
-    <div class="bg-white container mx-auto flex items-center justify-center max-w-screen-2xl h-[453px] behind-navbar mt-[55px]">
+    <div class="bg-white container font-serif mx-auto flex items-center justify-center max-w-screen-2xl h-[453px] behind-navbar mt-[55px]">
         <div class="flex items-center justify-center w-full">
             <!-- Gambar -->
             <div class="w-1/2 flex justify-center mr-3">
@@ -84,21 +91,25 @@ if (isset($_POST['logout'])) {
 
 
 <!-- Container untuk kartu-kartu -->
-<div class="bg-[#A69797] container mx-auto  max-w-screen-2xl border border-black flex flex-wrap justify-center gap-8">
-    <div class="card-container w-full border border-black flex flex-wrap justify-center gap-8 mt-8 ">
+<div class="bg-[#A69797] container mx-auto  max-w-screen-2xl  flex flex-wrap justify-center gap-8">
+    <div class="card-container w-full  flex flex-wrap justify-center mb-8 gap-8  mt-8 ">
     <!-- Card 1 -->
-    <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 border border-black w-10/12 gap-6">
-        <?php
-        // Loop untuk membuat card
-        for ($i = 0; $i < 8; $i++) {
-            echo "<div class='bg-white rounded-lg shadow-md'>";
-            echo "<div class='p-6'>";
-            echo "<h3 class='text-xl font-bold mb-2'>Judul Kartu " . ($i + 1) . "</h3>";
-            echo "<p class='text-gray-800 '>Deskripsi kartu " . ($i + 1) . "</p>";
-            echo "</div>";
-            echo "</div>";
-        }
-        ?>
+    <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4  sm:w-8/12 gap-2 sm:gap-6">
+
+    <?php
+// Loop untuk membuat card dari data produk
+foreach ($products as $product) {
+    echo "<div class='bg-white shadow-lg h-62 '>";
+    echo "<div class=''>";
+    echo "<img src='barang/" . $product['photo'] . "' alt='Product Image' class=' w-full h-40 object-fit'>";
+    echo "<h3 class='text-xl font-bold mb-1 px-3 '>" . $product['name'] . "</h3>";
+    echo "<p class='text-black px-3 mb-1'>" . formatRupiah($product['price']) . "</p>";
+    echo "<p class='text-gray-400 px-3 mb-1 text-[10px]'>" . $product['store_name'] . "</p>";
+    echo "</div>";
+    echo "</div>";
+}
+?>
+
     </div>
 
     </div>
