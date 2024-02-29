@@ -54,6 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
         exit();
     }
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -61,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MS STORE - <?php echo htmlspecialchars($product['name']); ?></title>
+    <title><?php echo $product['name']; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -81,18 +82,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
 <body class="bg-gray-100">
     <?php include "navbar.php"; ?>
     <div class="container mx-auto font-serif p-6 mt-[90px]">
-        <div class="max-w-2xl mx-auto">
+        <div class="max-w-2xl mx-auto bg-white shadow-lg  ">
             <img src="barang/<?php echo $product['photo']; ?>" alt="Product Image" class="w-full h-60 object-cover mb-4">
-            <h2 class="text-3xl font-bold mb-4"><?php echo $product['name']; ?></h2>
-            <p class="text-gray-800 mb-2"><?php echo formatRupiah($product['price']); ?></p>
-            <h3 class="text-sm text-gray-400 mb-4"><?php echo $product['store_name']; ?></h3>
-            <p class="text-gray-600"><?php echo $product['description']; ?></p>
+            <h2 class="text-3xl font-bold mb-4 px-3"><?php echo $product['name']; ?></h2>
+            <p class="text-gray-800 mb-2 px-3"><?php echo formatRupiah($product['price']); ?></p>
+            <h3 class="text-sm text-gray-400 mb-4 px-3"><?php echo $product['store_name']; ?></h3>
+            <p class="text-gray-600 px-3"><?php echo $product['description']; ?></p>
 
             <!-- Add to Cart form -->
             <form method="post" action="">
-                <label for="quantity">Quantity:</label>
-                <input type="number" id="quantity" name="quantity" value="1" min="1">
-                <button type="submit" name="add_to_cart" class="bg-blue-500 text-white px-4 py-2 mt-4">Add to Cart</button>
+                <label for="quantity" class="px-3">Quantity:</label>
+                <input type="number" id="quantity" class="shadow-sm border px-3 " name="quantity" value="1" min="1">
+                <button type="submit" name="add_to_cart" class="bg-blue-500 text-white px-4 py-2 mt-4 mb-4">Add to Cart</button>
             </form>
         </div>
     </div>

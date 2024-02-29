@@ -7,7 +7,8 @@ require 'vendor/autoload.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// Fungsi untuk membuat koneksi ke database
+
+
 function connectDB() {
     $servername = "localhost";
     $username = "root"; // Ganti dengan username MySQL Anda
@@ -33,7 +34,7 @@ $currentStep = isset($_POST['current_step']) ? $_POST['current_step'] : 'email';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($currentStep === 'email') {
-        $email = $_POST['email'];
+        $email = $_POST['p_email'];
 
         // Validasi format email
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -56,6 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             // Simpan kode verifikasi dalam sesi
             $_SESSION['reset_code'] = $resetCode;
+    $_SESSION['reset_email'] = $email;
 
             // Kirim email dengan kode reset
             $mail = new PHPMailer(true);
@@ -107,43 +109,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
            unset($_SESSION['reset_code']);
        }
     } elseif ($currentStep === 'reset') {
-        // Handle password reset
-        $email = $_POST['email']; // Dapatkan email dari formulir
-        $password = $_POST['password']; // Dapatkan password baru dari formulir
-        $confirmPassword = $_POST['confirmPassword']; // Dapatkan konfirmasi password baru dari formulir
-    
-        // Periksa apakah password cocok
+        $password = $_POST['p_password'];
+        $confirmPassword = $_POST['confirmPassword'];
+
+        // Validate password and confirm password match
         if ($password !== $confirmPassword) {
-            echo "<script>alert('Password dan konfirmasi password tidak cocok');</script>";
-        } else {
-            // Buat koneksi ke database
-            $conn = connectDB();
-                
-            // Escape input untuk menghindari SQL injection
-            $email = $conn->real_escape_string($email);
-            $password = $conn->real_escape_string($password);
-
-            // Panggil prosedur tersimpan
-            $stmt = $conn->prepare("CALL reset_password(?, ?)");
-            $stmt->bind_param("ss", $email, $password); // Bind email and password parameters
-            $stmt->execute();
-
-            // Periksa apakah prosedur dijalankan tanpa kesalahan
-            if ($stmt->error) {
-                // Jika ada kesalahan dalam menjalankan prosedur, tampilkan pesan kesalahan
-                echo "<script>alert('Gagal memperbarui password: " . $stmt->error . "');</script>";
-            } else {
-                // Jika pembaruan database berhasil, tampilkan pesan ke pengguna
-                echo "<script>alert('Password berhasil direset');</script>";
-
-                // Arahkan pengguna ke halaman login.php
-                header("Location: login.php");
-                exit(); // Pastikan untuk keluar dari skrip setelah melakukan pengalihan header
-            }
-                
-            // Tutup koneksi database
-            $conn->close();
+            echo "<script>alert('Password dan konfirmasi password tidak sesuai');</script>";
+            exit;
         }
+
+        // Update password in the database
+        $conn = connectDB();
+        $email = $conn->real_escape_string($_SESSION['reset_email']); // Fetch email from session
+
+        // Call stored procedure to update the password
+        $query = "CALL update_password('$email', '$password')";
+        $conn->query($query);
+
+        // Close database connection
+        $conn->close();
+        
+        echo "<script>alert('Password berhasil direset'); window.location.href = 'login.php';</script>";
+        
     }
 }
 ?>
@@ -165,7 +152,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <h2 class="text-2xl font-semibold mb-4">Lupa Password</h2>
         <?php if ($currentStep === 'email') : ?>
         <p class="mb-4 ">Masukkan alamat email Anda untuk mereset password:</p>
-        <input type="email" name="email" placeholder="Alamat Email" required
+        <input type="email" name="p_email" placeholder="Alamat Email" required
             class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-4">
         <?php elseif ($currentStep === 'verification') : ?>
         <p class="mb-4">Masukkan kode verifikasi yang telah dikirim ke email Anda:</p>
@@ -173,7 +160,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-4">
         <?php elseif ($currentStep === 'reset') : ?>
         <p class="mb-4">Masukkan password baru:</p>
-        <input type="password" name="password" placeholder="Password Baru" required
+        <input type="password" name="p_password" placeholder="Password Baru" required
             class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-4">
         <p class="mb-4">Konfirmasi password baru:</p>
         <input type="password" name="confirmPassword" placeholder="Konfirmasi Password Baru" required
@@ -181,8 +168,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <input type="hidden" name="action" value="update_password">
         <?php endif; ?>
         <input type="hidden" name="current_step" value="<?php echo $currentStep; ?>">
-        <input type="submit" value="<?php echo $currentStep === 'reset' ? 'Reset Password' : 'Kirim'; ?>"
-            class="bg-blue-500 hover:bg-blue-700 text-white font-bold w-full py-2 px-4 rounded focus:outline-none focus:shadow-outline cursor-pointer">
+            <input type="submit" value="Reset Password" class="bg-blue-500 hover:bg-blue-700 text-white font-bold w-full py-2 px-4 rounded focus:outline-none focus:shadow-outline cursor-pointer">
     </form>
 </body>
 

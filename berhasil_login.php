@@ -52,7 +52,7 @@ $products = $stmtProducts->fetchAll(PDO::FETCH_ASSOC);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MS STORE</title>
+    <title>MS STORE </title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -99,16 +99,17 @@ $products = $stmtProducts->fetchAll(PDO::FETCH_ASSOC);
     <?php
 // Loop untuk membuat card dari data produk
 foreach ($products as $product) {
-    echo "<div class='bg-white shadow-lg h-62 '>";
+    echo "<a href='detail_produk.php?id={$product['id_produk']}' class='bg-white shadow-lg h-62 hover:shadow-xl transition-transform transform hover:scale-105'>";
     echo "<div class=''>";
-    echo "<img src='barang/" . $product['photo'] . "' alt='Product Image' class=' w-full h-40 object-fit'>";
-    echo "<h3 class='text-xl font-bold mb-1 px-3 '>" . $product['name'] . "</h3>";
+    echo "<img src='barang/" . $product['photo'] . "' alt='Product Image' class='w-full h-40 object-fit'>";
+    echo "<h3 class='text-xl font-bold mb-1 px-3'>" . $product['name'] . "</h3>";
     echo "<p class='text-black px-3 mb-1'>" . formatRupiah($product['price']) . "</p>";
     echo "<p class='text-gray-400 px-3 mb-1 text-[10px]'>" . $product['store_name'] . "</p>";
     echo "</div>";
-    echo "</div>";
+    echo "</a>";
 }
 ?>
+
 
     </div>
 
