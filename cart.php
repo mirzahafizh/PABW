@@ -3,8 +3,6 @@ session_start();
 
 include "config.php";
 
-
-
 if (!isset($_SESSION['username'])) {
     header("Location: login.php");
     exit();
@@ -50,30 +48,21 @@ function deleteCartItem($cartItemId, $username) {
     exit();
 }
 
-
-
-// Handle checkout button
+// Handle Checkout button
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
-    // Assuming you have a function to handle the checkout process
-    // Replace 'handleCheckout' with your actual function
-    handleCheckout($username);
+    // Redirect to checkout.php with total price
+    header("Location: checkout.php?total_price=" . $total);
+    exit();
 }
 
 // Updated PHP code
 // Handle delete button
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete'])) {
-    $cartItemIds = isset($_POST['delete']) ? $_POST['delete'] : [];
-
-    foreach ($cartItemIds as $cartItemId) {
-        // Assuming you have a function to handle item deletion
-        // Replace 'deleteCartItem' with your actual function
-        deleteCartItem($cartItemId, $username);
-    }
+    $cartItemId = $_POST['delete'];
+    // Assuming you have a function to handle item deletion
+    // Replace 'deleteCartItem' with your actual function
+    deleteCartItem($cartItemId, $username);
 }
-
-
-
-
 
 $stmt = $pdo->prepare("SELECT * FROM carts WHERE username = ?");
 $stmt->execute([$username]);
@@ -85,23 +74,13 @@ function formatRupiah($price)
     return 'Rp' . number_format($price, 0, ',', '.');
 }
 
-
 // Calculate total price for selected item
 // Fetch total price from the database
 $totalQuery = $pdo->prepare("SELECT SUM(total_price) as total FROM carts WHERE username = ?");
 $totalQuery->execute([$username]);
 $totalResult = $totalQuery->fetch(PDO::FETCH_ASSOC);
 $total = $totalResult['total'];
-
-// Handle Checkout button
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
-    // Implement your checkout logic using $total
-    // For example, redirect to a checkout page passing the total price
-    header("Location: checkout.php?total_price=" . $total);
-    exit();
-}
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -167,12 +146,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
                     <!-- Checkout and delete buttons -->
                     <div class="mt-4">
                         <button type="submit" name="checkout" class="bg-blue-500 text-white px-4 py-2">Checkout</button>
+                        <?php if (!empty($cartItems)) : ?>
+                            <button type="submit" name="delete" value="<?php echo $cartItems[0]['id_cart']; ?>" class="bg-red-500 text-white px-4 py-2 mt-4">Delete</button>
+                        <?php endif; ?>
                     </div>
-                </form>
-                <form method="post" action="">
-                    <?php foreach ($cartItems as $cartItem) : ?>
-                        <button type="submit" name="delete[]" value="<?php echo $cartItem['id_cart']; ?>" class="bg-red-500 text-white px-4 py-2 mt-4">Delete</button>
-                    <?php endforeach; ?>
                 </form>
             <?php endif; ?>
         </div>
