@@ -117,8 +117,20 @@ if (isset($_POST['tambah_produk'])) {
 
 
 
-// ... (rest of your code)
+// Proses edit produk jika form disubmit
+if (isset($_POST['edit_produk'])) {
+    $edited_product_id = $_POST['edited_product_id'];
+    $edited_product_name = $_POST['edited_product_name'];
+    $edited_product_price = $_POST['edited_product_price'];
+    $edited_product_description = $_POST['edited_product_description'];
+    $edited_product_stock = $_POST['edited_product_stock'];
 
+    $queryUpdateProduct = "UPDATE products SET name = ?, price = ?, description = ?, stock = ? WHERE id_produk = ?";
+    $statementUpdateProduct = $pdo->prepare($queryUpdateProduct);
+    $statementUpdateProduct->execute([$edited_product_name, $edited_product_price, $edited_product_description, $edited_product_stock, $edited_product_id]);
+
+    echo '<script>alert("Product updated successfully.");</script>';
+}
 
 
 
@@ -268,20 +280,36 @@ $products = $statement->fetchAll(PDO::FETCH_ASSOC);
         $products = $statementProducts->fetchAll(PDO::FETCH_ASSOC);
         ?>
 
-        <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-6">
-            <?php foreach ($products as $product) : ?>
-                <div class="bg-white  shadow-md">
-                    <?php if ($product['photo']) : ?>
-                        <img src="barang/<?= $product['photo']; ?>" alt="<?= $product['name']; ?>" class="w-full h-[120px] fluid">
-                    <?php endif; ?>
-                    <div class="p-6">
-                        <h3 class="text-xl font-bold mb-2"><?= $product['name']; ?></h3>
-                        <p class="text-gray-800"><?= formatRupiah($product['price']); ?></p>
-                        <p class="text-gray-800">Stock: <?= $product['stock']; ?></p> <!-- Display stock -->
-                    </div>
+<div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-6">
+        <?php foreach ($products as $product) : ?>
+            <div class="bg-white  shadow-md">
+                <?php if ($product['photo']) : ?>
+                    <img src="barang/<?= $product['photo']; ?>" alt="<?= $product['name']; ?>" class="w-full h-[120px] fluid">
+                <?php endif; ?>
+                <div class="p-6">
+
+                    <!-- Edit Product Form -->
+                    <form method="post" action="">
+                        <input type="hidden" name="edited_product_id" value="<?= $product['id_produk']; ?>">
+                        <label for="edited_product_name" class="block text-sm font-medium text-gray-700">Edit Nama Produk:</label>
+                        <input type="text" name="edited_product_name" value="<?= $product['name']; ?>" required class="border rounded px-3 py-2 w-full">
+
+                        <label for="edited_product_price" class="block text-sm font-medium text-gray-700">Edit Harga:</label>
+                        <input type="number" name="edited_product_price" value="<?= $product['price']; ?>" required class="border rounded px-3 py-2 w-full">
+
+                        <label for="edited_product_description" class="block text-sm font-medium text-gray-700">Edit Deskripsi:</label>
+                        <textarea name="edited_product_description" required class="border rounded px-3 py-2 w-full"><?= $product['description']; ?></textarea>
+
+                        <label for="edited_product_stock" class="block text-sm font-medium text-gray-700">Edit Stok:</label>
+                        <input type="number" name="edited_product_stock" value="<?= $product['stock']; ?>" required class="border rounded px-3 py-2 w-full">
+
+                        <button type="submit" name="edit_produk" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mt-2">Update Produk</button>
+                    </form>
+
                 </div>
-            <?php endforeach; ?>
-        </div>
+            </div>
+        <?php endforeach; ?>
+    </div>
 
 
     </div>

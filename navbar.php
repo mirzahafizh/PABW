@@ -9,11 +9,10 @@ if (!isset($_SESSION['username'])) {
 include "config.php";
 
 $username = $_SESSION['username'];
-$role ='';
-
+$role = '';
 
 // Ambil email dan lokasi foto profil berdasarkan username
-$stmt = $pdo->prepare("SELECT role, profile_image,saldo FROM tb_user WHERE username = ?");
+$stmt = $pdo->prepare("SELECT role, profile_image, saldo FROM tb_user WHERE username = ?");
 $stmt->execute([$username]);
 $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -22,9 +21,6 @@ if ($row) {
     $profile_image = $row['profile_image']; // Simpan lokasi file foto profil ke dalam variabel
     $saldo = $row['saldo']; // Simpan saldo ke dalam variabel
 }
-
-
-
 
 // Proses logout ketika tombol logout ditekan
 if (isset($_POST['logout'])) {
@@ -74,11 +70,11 @@ if (isset($_POST['logout'])) {
         <div class="container mx-auto flex items-center justify-between py-4 px-6 ">
             <!-- Logo -->
             <div class="flex-shrink-0">
-            <!-- Logo -->
-            <a href="berhasil_login.php" id="logo" class="hidden sm:flex items-center mr-4">
-                <img src="assets/gg_profile.png" alt="MS STORE Logo" class="w-8 h-8 mr-2">
-                <span class="text-xl font-bold">MS STORE</span>
-            </a>
+                <!-- Logo -->
+                <a href="berhasil_login.php" id="logo" class="hidden sm:flex items-center mr-4">
+                    <img src="assets/gg_profile.png" alt="MS STORE Logo" class="w-8 h-8 mr-2">
+                    <span class="text-xl font-bold">MS STORE</span>
+                </a>
             </div>
             <!-- Search bar -->
             <div class="flex-grow md:w-1/3 lg:w-2/5 xl:w-1/3 mx-4">
@@ -89,47 +85,49 @@ if (isset($_POST['logout'])) {
             </div>
             <!-- Icons -->
             <div class="flex items-center">
-
                 <!-- Cart icon -->
                 <a href="cart.php" class="mr-4">
                     <img src="assets/simple-line-icons_basket.png" alt="Shopping Cart" class="w-6 h-6">
                 </a>
                 <!-- User info with dropdown -->
                 <div class="relative">
-                <button id="user-avatar" class="flex items-center focus:outline-none">
-        <?php
-        // Check if the user has an avatar path
-        if (isset($profile_image) && $profile_image) {
-            echo '<img src="' . $profile_image . '" alt="User Avatar" class="w-8 h-8 rounded-full">';
-        } else {
-            // If no avatar path is available, you can use a default image
-            echo '<img src="assets/gg_profile.png" alt="Default Avatar" class="w-8 h-8 rounded-full">';
-        }
-        ?>
-        <span class="ml-2 hidden md:inline"><?php echo $_SESSION['username']; ?></span>
-    </button>
-                <div id="dropdown-menu" class="absolute w-[200px] right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg hidden">
-                    <?php if ($role === "admin"): ?>
-                        <a class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-500 hover:text-white"
-                            href="profile.php">Profile</a>
-                        <a class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-500 hover:text-white"
-                            href="admin.php">Admin</a>
-                    <?php elseif ($role === "pengguna"): ?>
-                        <a class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-500 hover:text-white"
-                            href="toko.php">Toko Saya</a>
-                        <a class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-500 hover:text-white"
-                            href="profile.php">Profile</a>
-                        <!-- Menampilkan saldo di dropdown -->
-                        <p class="block px-4 py-2 text-sm text-gray-700">Saldo: Rp <?php echo number_format($saldo, 2, ',', '.'); ?></p>
-                    <?php elseif ($role === "kurir"): ?>
-                        <a class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-500 hover:text-white"
-                            href="profile.php">Profil Kurir</a>
-                    <?php endif; ?>
-                    <form action="" method="post">
-                        <button type="submit" name="logout"
-                            class="block w-full px-4 py-2 text-sm text-left text-gray-700 hover:bg-blue-500 hover:text-white focus:outline-none">Logout</button>
-                    </form>
-                </div>
+                    <button id="user-avatar" class="flex items-center focus:outline-none">
+                        <?php
+                        // Check if the user has an avatar path
+                        if (isset($profile_image) && $profile_image) {
+                            echo '<img src="' . $profile_image . '" alt="User Avatar" class="w-8 h-8 rounded-full">';
+                        } else {
+                            // If no avatar path is available, you can use a default image
+                            echo '<img src="assets/gg_profile.png" alt="Default Avatar" class="w-8 h-8 rounded-full">';
+                        }
+                        ?>
+                        <span class="ml-2 hidden md:inline"><?php echo $_SESSION['username']; ?></span>
+                    </button>
+                    <div id="dropdown-menu" class="absolute w-[200px] right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg hidden">
+                        <?php if ($role === "admin"): ?>
+                            <a class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-500 hover:text-white"
+                                href="profile.php">Profile</a>
+                            <a class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-500 hover:text-white"
+                                href="admin.php">Admin</a>
+                        <?php elseif ($role === "pengguna"): ?>
+                            <a class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-500 hover:text-white"
+                                href="toko.php">Toko Saya</a>
+                            <a class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-500 hover:text-white"
+                                href="profile.php">Profile</a>
+                            <!-- Menampilkan saldo di dropdown -->
+                            <p class="block px-4 py-2 text-sm text-gray-700">Saldo: Rp <?php echo number_format($saldo, 2, ',', '.'); ?></p>
+                            <!-- Menambahkan menu "Status Pesanan" -->
+                            <a class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-500 hover:text-white"
+                                href="status.php">Status Pesanan</a>
+                        <?php elseif ($role === "kurir"): ?>
+                            <a class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-500 hover:text-white"
+                                href="profile.php">Profil Kurir</a>
+                        <?php endif; ?>
+                        <form action="" method="post">
+                            <button type="submit" name="logout"
+                                class="block w-full px-4 py-2 text-sm text-left text-gray-700 hover:bg-blue-500 hover:text-white focus:outline-none">Logout</button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -141,6 +139,7 @@ if (isset($_POST['logout'])) {
             var dropdownMenu = document.getElementById('dropdown-menu');
             dropdownMenu.classList.toggle('hidden');
         });
-        
-        
     </script>
+</body>
+
+</html>

@@ -1,5 +1,6 @@
 <?php
 session_start();
+include "config.php";
 
 // Lakukan koneksi ke database, misalnya dengan menggunakan mysqli atau PDO
 
@@ -28,36 +29,53 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $sql = "SELECT * FROM tb_user WHERE username = '$username' AND password = '$password'";
     $result = $conn->query($sql);
 
- // ...
+    if ($result->num_rows == 1) {
+        // Login berhasil
+        $_SESSION["username"] = $username;
 
-if ($result->num_rows == 1) {
-    // Login berhasil
-    $_SESSION["username"] = $username;
+        // Set cookie "Remember Me" jika dicentang
+        if ($remember_me) {
+            $token = bin2hex(random_bytes(16)); // Hasilkan token acak
+            
+            // Simpan token di database untuk identifikasi pengguna
+            $sql = "UPDATE tb_user SET remember_token = '$token' WHERE username = '$username'";
+            $conn->query($sql);
 
-    // Set cookie "Remember Me" jika dicentang
-    if ($remember_me) {
-        $token = bin2hex(random_bytes(16)); // Hasilkan token acak
-        
-        // Simpan token di database untuk identifikasi pengguna
-        $sql = "UPDATE tb_user SET remember_token = '$token' WHERE username = '$username'";
-        $conn->query($sql);
+            // Set cookie pada sisi klien
+            setcookie("remember_token", $token, time() + (30 * 24 * 60 * 60), "/"); // 30 hari kedaluwarsa
+        }
 
-        // Set cookie pada sisi klien
-        setcookie("remember_token", $token, time() + (30 * 24 * 60 * 60), "/"); // 30 hari kedaluwarsa
+        // Periksa peran pengguna dari database
+        $role_sql = "SELECT role FROM tb_user WHERE username = '$username'";
+        $role_result = $conn->query($role_sql);
+
+        if ($role_result->num_rows == 1) {
+            $role_row = $role_result->fetch_assoc();
+            $role = $role_row["role"];
+
+            // Redirect user based on role
+            if ($role === 'kurir') {
+                header("Location: kurir.php");
+                exit();
+            
+            } elseif ($role === 'admin') {
+                header("Location: admin/admin.php?action=daftar_user");
+                exit();
+            }
+        }
+
+        header("Location: berhasil_login.php"); // Redirect ke halaman utama setelah login berhasil
+        exit();
+    } else {
+        // Login gagal
+        $error_message = "Username atau password salah. Silakan coba lagi.";
     }
-
-    header("Location: berhasil_login.php"); // Redirect ke halaman utama setelah login berhasil
-    exit();
-} else {
-    // Login gagal
-    $error_message = "Username atau password salah. Silakan coba lagi.";
 }
 
-// ...
-}
 // Tutup koneksi ke database
 $conn->close();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="id">

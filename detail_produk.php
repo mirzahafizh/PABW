@@ -41,9 +41,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
         // User is logged in, proceed to add to cart
         $username = $_SESSION['username'];
         $totalPrice = $quantity * $product['price'];
+        $shippingCost = 15000;
 
-        $stmt = $pdo->prepare("INSERT INTO carts (username, id_produk, quantity, name, price, total_price) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$username, $productId, $quantity, $product['name'], $product['price'], $totalPrice]);
+        // Fetch product details based on id_produk
+        $stmtProduk = $pdo->prepare("SELECT id_toko, store_name, name FROM products WHERE id_produk = ?");
+        $stmtProduk->execute([$productId]);
+        $productDetails = $stmtProduk->fetch(PDO::FETCH_ASSOC);
+
+        // Assign fetched values to variables
+        $id_toko = $productDetails['id_toko'];
+        $store_name = $productDetails['store_name'];
+        $name = $productDetails['name'];
+
+        // Check if the product already exists in the cart
+        $stmtCartCheck = $pdo->prepare("SELECT * FROM carts WHERE username = ? AND id_produk = ?");
+        $stmtCartCheck->execute([$username, $productId]);
+        $existingCartItem = $stmtCartCheck->fetch(PDO::FETCH_ASSOC);
+
+        if ($existingCartItem) {
+            // If the product already exists in the cart, update its quantity
+            $newQuantity = $existingCartItem['quantity'] + $quantity;
+            $newTotalPrice = $existingCartItem['total_price'] + $totalPrice;
+            $stmtUpdateQuantity = $pdo->prepare("UPDATE carts SET quantity = ?, total_price = ? WHERE username = ? AND id_produk = ?");
+            $stmtUpdateQuantity->execute([$newQuantity, $newTotalPrice, $username, $productId]);
+        } else {
+            // If the product is not in the cart, insert it as a new item
+            $stmtInsertCartItem = $pdo->prepare("INSERT INTO carts (username, id_produk, id_toko, store_name, name, price, quantity, total_price, shipping_cost) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmtInsertCartItem->execute([$username, $productId, $id_toko, $store_name, $name, $product['price'], $quantity, $totalPrice, $shippingCost]);
+        }
 
         // Redirect to the cart page after adding to cart
         header("Location: cart.php");
@@ -54,8 +79,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
         exit();
     }
 }
-
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -95,6 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
                 <input type="number" id="quantity" class="shadow-sm border px-3 " name="quantity" value="1" min="1">
                 <button type="submit" name="add_to_cart" class="bg-blue-500 text-white px-4 py-2 mt-4 mb-4">Add to Cart</button>
             </form>
+
         </div>
     </div>
 </body>
