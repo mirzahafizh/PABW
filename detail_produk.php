@@ -108,18 +108,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
     <?php include "navbar.php"; ?>
     <div class="container mx-auto font-serif p-6 mt-[90px]">
         <div class="max-w-2xl mx-auto bg-white shadow-lg  ">
-            <img src="barang/<?php echo $product['photo']; ?>" alt="Product Image" class="w-full h-60 object-cover mb-4">
-            <h2 class="text-3xl font-bold mb-4 px-3"><?php echo $product['name']; ?></h2>
+            <img src="barang/<?php echo $product['photo']; ?>" alt="Product Image" class="w-full h-60 object-fit border-b mb-4">
+            <h2 class="text-3xl font-bold mb-4 px-3"><?php echo strtoupper($product['name']); ?></h2>
             <p class="text-gray-800 mb-2 px-3"><?php echo formatRupiah($product['price']); ?></p>
-            <h3 class="text-sm text-gray-400 mb-4 px-3"><?php echo $product['store_name']; ?></h3>
-            <p class="text-gray-600 px-3"><?php echo $product['description']; ?></p>
+            <h3 class="text-sm text-gray-400  px-3">Stock :<?php echo $product['stock']; ?></h3>
 
             <!-- Add to Cart form -->
             <form method="post" action="">
                 <label for="quantity" class="px-3">Quantity:</label>
                 <input type="number" id="quantity" class="shadow-sm border px-3 " name="quantity" value="1" min="1">
-                <button type="submit" name="add_to_cart" class="bg-blue-500 text-white px-4 py-2 mt-4 mb-4">Add to Cart</button>
+                <button type="submit" name="add_to_cart" class="bg-blue-500 text-white px-4 py-2 mt-2 mb-4">Add to Cart</button>
             </form>
+
+        </div>
+    </div>
+
+    <div class="container mx-auto font-serif p-6 ">
+        <div class="max-w-2xl mx-auto bg-white shadow-lg p-6  ">
+            <h2 class="mb-4">Informasi Toko</h2>
+            <h3 class="text-md text-black mb-4 px-3">Store Name : <?php echo $product['store_name']; ?></h3>
+            <p class="text-black text-sm px-3"> Store Address : <?php echo $product['store_address']; ?></p>
 
         </div>
     </div>

@@ -1,6 +1,7 @@
 <?php
 session_start();
 
+
 // Periksa apakah pengguna belum login, jika belum, arahkan ke halaman login.php
 if (!isset($_SESSION['username'])) {
     header("Location: login.php");

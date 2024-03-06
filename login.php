@@ -4,6 +4,12 @@ include "config.php";
 
 // Lakukan koneksi ke database, misalnya dengan menggunakan mysqli atau PDO
 
+// Check if the user is already logged in
+if (isset($_SESSION['username'])) {
+    header("Location: berhasil_login.php");
+    exit();
+}
+
 // Konfigurasi koneksi
 $servername = "localhost";
 $username = "root";

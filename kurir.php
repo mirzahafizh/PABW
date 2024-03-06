@@ -69,9 +69,9 @@ $orders = $ordersQuery->fetchAll(PDO::FETCH_ASSOC);
             <h1 class="text-2xl font-semibold mb-4">Menu Kurir</h1>
             <ul>
                 <li><a href="kurir.php" class="block py-2">Semua Orderan</a></li>
-                <li><a href="#" class="block py-2">List Orderan Yang Diambil</a></li>
+                <li><a href="orderan_diambil.php" class="block py-2">List Orderan Yang Diambil</a></li>
                 <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post">
-                    <button type="submit" name="logout" class="block py-2 text-left w-full">Logout</button>
+                    <button type="submit" name="logout" class="block py-2    text-left w-full">Logout</button>
                 </form>
                 <!-- Tambahkan menu tambahan jika diperlukan -->
             </ul>

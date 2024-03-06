@@ -35,6 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel'])) {
 }
 
 // Function to handle payment and insert data into 'orders' table
+// Function to handle payment and insert data into 'orders' table
 function handlePayment($username, $orders, $pdo) {
     // Prepare statements
     $userStmt = $pdo->prepare("SELECT phone, address, saldo FROM tb_user WHERE username = ?");
@@ -43,6 +44,8 @@ function handlePayment($username, $orders, $pdo) {
     $deleteCartStmt = $pdo->prepare("DELETE FROM carts WHERE id_cart = ?");
     $updateStatusStmt = $pdo->prepare("UPDATE pra_order SET status_pesanan = 'menunggu kurir' WHERE order_id = ?");
     $updateStockStmt = $pdo->prepare("UPDATE products SET stock = ? WHERE name = ?");
+
+    $totalPriceToDeduct = 0; // Initialize total price to deduct
 
     foreach ($orders as $order) {
         $orderId = $order['order_id'];
@@ -69,24 +72,13 @@ function handlePayment($username, $orders, $pdo) {
         $storeData = $storeStmt->fetch(PDO::FETCH_ASSOC);
         $sellerName = $storeData['username'];
 
-
         // Calculate total price
         $totalPrice = $order['total_price'];
 
-        
-            // Fetch user balance
-            $userStmt->execute([$username]);
-            $userData = $userStmt->fetch(PDO::FETCH_ASSOC);
-            $userBalance = $userData['saldo'];
-    
-            // Check if user balance is sufficient
-            if ($userBalance < $totalPrice) {
-                // Prepare the error message
-                $errorMessage = "Saldo tidak mencukupi. Silakan hubungi admin untuk top up saldo.";
-                // Redirect back with error message using JavaScript alert
-                echo "<script>alert('$errorMessage'); window.location.href='checkout.php';</script>";
-                exit();
-            }
+        // Deduct only if the status is 'diterima pembeli'
+        if ($order['status_pesanan'] == 'diterima pembeli') {
+            $totalPriceToDeduct += $totalPrice;
+        }
 
         // Check if stock is sufficient
         if ($quantity > $stock) {
@@ -96,7 +88,6 @@ function handlePayment($username, $orders, $pdo) {
             echo "<script>alert('$errorMessage'); window.location.href='checkout.php';</script>";
             exit();
         }
-        
 
         // Insert order data into 'orders' table
         $stmt = $pdo->prepare("INSERT INTO orders (username, name, status_pesanan, phone, address, store_address, store_name, shipping_cost, total_price, total_items_price, seller_username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
@@ -106,6 +97,26 @@ function handlePayment($username, $orders, $pdo) {
         $newStock = $stock - $quantity;
         $updateStockStmt->execute([$newStock, $productName]);
     }
+
+    // Check if the user's balance is sufficient for the deducted total price
+    $userStmt->execute([$username]);
+    $userData = $userStmt->fetch(PDO::FETCH_ASSOC);
+    $userBalance = $userData['saldo'];
+
+    if ($userBalance < $totalPriceToDeduct) {
+        // Prepare the error message
+        $errorMessage = "Saldo tidak mencukupi. Silakan hubungi admin untuk top up saldo.";
+        // Redirect back with error message using JavaScript alert
+        echo "<script>alert('$errorMessage'); window.location.href='checkout.php';</script>";
+        exit();
+    }
+
+    // Deduct the total price
+    $newUserBalance = $userBalance - $totalPriceToDeduct;
+
+    // Update the user's balance
+    $updateBalanceStmt = $pdo->prepare("UPDATE tb_user SET saldo = ? WHERE username = ?");
+    $updateBalanceStmt->execute([$newUserBalance, $username]);
 
     // Clear the pra_order table after payment
     $cancelQuery = $pdo->prepare("DELETE FROM pra_order WHERE username = ?");
@@ -134,78 +145,81 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pay'])) {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout</title>
+    <!-- Include Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
-    <h1>Checkout</h1>
-    <?php if (empty($orders)) : ?>
-        <p>No orders to checkout.</p>
-    <?php else : ?>
-        <table border="1">
-            <thead>
-                <tr>
-                    <th>Order ID</th>
-                    <th>Store ID</th>
-                    <th>Item Name</th>
-                    <th>Store Name</th>
-                    <th>Price</th>
-                    <th>Quantity</th>
-                    <th>Total Price</th>
-                    <th>Shipping Cost</th>
-                </tr>
-            </thead>
-            <tbody>
-            <?php
-                $totalPrice = 0;
-                $totalItemsPrice = 0;
-                $shippingCostMap = []; // Map to store shipping costs for each store
 
-                foreach ($orders as $order) {
-                    $totalItemsPrice += ($order['price'] * $order['quantity']); // Total harga untuk setiap item
-                    $totalPrice += $order['total_items_price'];
-                    $shippingCostMap[$order['id_toko']] = $order['shipping_cost'];
-                }
-                // Calculate total shipping cost
-                $totalShippingCost = array_sum($shippingCostMap);
-                ?>
+<body class="bg-gray-100 p-4">
+    <div class="max-w-3xl mx-auto bg-white shadow-lg p-8 rounded-md mt-8">
+        <h1 class="text-3xl font-bold mb-4">Checkout</h1>
 
-                <?php foreach ($orders as $order) : ?>
+        <?php if (empty($orders)) : ?>
+            <p class="text-gray-600">No orders to checkout.</p>
+        <?php else : ?>
+            <table class="table-auto w-full">
+                <thead>
                     <tr>
-                        <td><?php echo $order['order_id']; ?></td>
-                        <td><?php echo $order['id_toko']; ?></td>
-                        <td><?php echo $order['name']; ?></td>
-                        <td><?php echo $order['store_name']; ?></td>
-                        <td><?php echo formatRupiah($order['price']); ?></td>
-                        <td><?php echo $order['quantity']; ?></td>
-                        <td><?php echo formatRupiah($order['price'] * $order['quantity']); ?></td> <!-- Total harga untuk setiap item -->
-                        <td><?php echo formatRupiah($shippingCostMap[$order['id_toko']]); ?></td>
+                        <th class="px-4 py-2">Order ID</th>
+                        <th class="px-4 py-2">Store ID</th>
+                        <th class="px-4 py-2">Item Name</th>
+                        <th class="px-4 py-2">Store Name</th>
+                        <th class="px-4 py-2">Price</th>
+                        <th class="px-4 py-2">Quantity</th>
+                        <th class="px-4 py-2">Total Price</th>
+                        <th class="px-4 py-2">Shipping Cost</th>
                     </tr>
-                <?php endforeach; ?>
+                </thead>
+                <tbody>
+                    <?php foreach ($orders as $order) : ?>
+                        <tr>
+                            <td class="border px-4 py-2"><?php echo $order['order_id']; ?></td>
+                            <td class="border px-4 py-2"><?php echo $order['id_toko']; ?></td>
+                            <td class="border px-4 py-2"><?php echo $order['name']; ?></td>
+                            <td class="border px-4 py-2"><?php echo $order['store_name']; ?></td>
+                            <td class="border px-4 py-2"><?php echo formatRupiah($order['price']); ?></td>
+                            <td class="border px-4 py-2"><?php echo $order['quantity']; ?></td>
+                            <td class="border px-4 py-2"><?php echo formatRupiah($order['price'] * $order['quantity']); ?></td>
+                            <td class="border px-4 py-2"><?php echo formatRupiah($order['shipping_cost']); ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+            <?php if (!empty($orders)) : ?>
+            <?php
+            $totalPrice = 0;
+            $totalItemsPrice = 0;
+            $shippingCostMap = [];
+
+            foreach ($orders as $order) {
+                $totalItemsPrice += ($order['price'] * $order['quantity']);
+                $totalPrice += $order['total_items_price'];
+                $shippingCostMap[$order['id_toko']] = $order['shipping_cost'];
+            }
+            $totalShippingCost = array_sum($shippingCostMap);
+            ?>
+
+            <p class="text-right mt-2">Total Items Price: <?php echo formatRupiah($totalItemsPrice); ?></p>
+            <p class="text-right mt-2">Total Shipping Cost: <?php echo formatRupiah($totalShippingCost); ?></p>
+            <p class="text-right mt-2">Subtotal: <?php echo formatRupiah($totalItemsPrice + $totalShippingCost); ?></p>
+
+                <!-- Rest of the HTML -->
+            <?php endif; ?>
+
+            <form method="post" action="" class="mt-6  flex justify-end">
+                <!-- Add payment form fields -->
+                <button type="submit" name="pay" class="bg-blue-500 w-20 text-white px-4 py-2 rounded-md">Pay</button>
+                <!-- Cancel button to go back to cart -->
+                <button type="submit" name="cancel" class="bg-gray-500 w-20 text-white px-4 py-2 ml-4 rounded-md">Cancel</button>
+            </form>
 
 
-            </tbody>
-        </table>
-
-    <?php endif; ?>
-    <?php if (!empty($orders)) : ?>
-    <p>Total Items Price: <?php echo formatRupiah($totalItemsPrice); ?></p> <!-- Total harga dari semua item -->
-<?php endif; ?>
-
-<?php if (!empty($orders)) : ?>
-    <p>Total Shipping Cost: <?php echo formatRupiah($totalShippingCost); ?></p>
-    <p>Subtotal: <?php echo formatRupiah($totalItemsPrice + $totalShippingCost); ?></p>
-<?php endif; ?>
-
-    <form method="post" action="">
-        <!-- Add payment form fields -->
-        <button type="submit" name="pay">Pay</button>
-        <!-- Cancel button to go back to cart -->
-    </form>
-    <form method="post" action="">
-        <button type="submit" name="cancel">Cancel</button>
-    </form>
+        <?php endif; ?>
+    </div>
 </body>
+
 </html>

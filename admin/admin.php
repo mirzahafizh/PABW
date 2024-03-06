@@ -49,7 +49,7 @@ function deleteUser($pdo, $username) {
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete_user'])) {
     $username = $_POST['username'];
     deleteUser($pdo, $username);
-    header("Location: admin.php");
+    header("Location:  admin.php?action=daftar_user");
     exit();
 }
 // Fungsi untuk menambahkan saldo
@@ -144,8 +144,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_user'])) {
 }
 
 
-
-
 ?>
 
 <!DOCTYPE html>
@@ -154,22 +152,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_user'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel</title>
-    <!-- Include Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="font-sans">
 
 <div class="flex">
 <!-- Sidebar -->
-<div class="bg-gray-800 text-white w-1/5 min-h-screen max-h-full py-6 px-4">
-    <a href="?action=daftar_user" class="block py-2 px-4 text-white hover:bg-gray-700">Daftar User</a>
-    <a href="?action=daftar_barang" class="block py-2 px-4 text-white hover:bg-gray-700">Daftar Barang</a>
-    <a href="?action=tambah_user" class="block py-2 px-4 text-white hover:bg-gray-700">Tambah User</a>
-    <!-- Logout Button -->
-    <form method="post" action="">
-        <button type="submit" name="logout" class="block py-2 px-4 text-white bg-red-500 hover:bg-red-700 mt-4">Logout</button>
-    </form>
-</div>
+<div class="flex flex-col justify-between bg-gray-800 text-white w-1/5 min-h-screen max-h-full py-6 px-4">
+        <div>
+            <h1 class="text-[34px] font-serif text-bold">MS STORE</h1>
+            <a href="?action=daftar_user" class="block py-2 px-4 text-white hover:bg-gray-700">Daftar User</a>
+            <a href="?action=daftar_barang" class="block py-2 px-4 text-white hover:bg-gray-700">Daftar Barang</a>
+            <a href="?action=tambah_user" class="block py-2 px-4 text-white hover:bg-gray-700">Tambah User</a>
+        </div>
+        <!-- Logout Button -->
+        <form method="post" action="" class="mt-auto">
+            <button type="submit" name="logout" class="block py-2 px-4 w-full text-white bg-red-500 hover:bg-red-700">Logout</button>
+        </form>
+    </div>
 
 
     <!-- Content -->
