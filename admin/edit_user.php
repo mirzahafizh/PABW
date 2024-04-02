@@ -1,5 +1,7 @@
 <?php
-include '../config.php';
+include '../user/config.php';
+require_once 'function_log.php';
+
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_user'])) {
     $edit_username = $_POST['edit_username'];
@@ -23,8 +25,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_user'])) {
         $stmt = $pdo->prepare("UPDATE tb_user SET fullname = ?, email = ?, phone = ?, role = ?, saldo = ? WHERE username = ?");
         $stmt->execute([$edit_fullname, $edit_email, $edit_phone, $edit_role, $new_saldo, $edit_username]);
 
+        // Log activity for updating user information
+        $logMessage = "Updated user: $edit_username. ";
+
+        // Check if saldo is edited and add it to the log message
+        if ($edit_saldo_add !== $user['saldo']) {
+            $logMessage .= "Add saldo: $edit_saldo_add. ";
+        }
+
+
+        // Log activity only if saldo or role is edited
+        if ($edit_saldo_add !== $user['saldo']) {
+            logActivity($pdo, $logMessage, $_SESSION['username']);
+        }
+
+
         // Redirect back to the admin page after the update
-        header("Location: admin.php");
+        header("Location: admin.php?action=daftar_user");
         exit();
     } else {
         // Handle the case when the user is not found

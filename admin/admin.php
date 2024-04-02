@@ -1,6 +1,9 @@
 <?php
-session_start();
-include '../config.php';
+include '../user/config.php';
+
+// Fungsi untuk mencatat aktivitas ke dalam log
+include 'function_log.php';
+
 
 // Proses logout ketika tombol logout ditekan
 if (isset($_POST['logout'])) {
@@ -8,27 +11,55 @@ if (isset($_POST['logout'])) {
     session_unset();
     // Hancurkan sesi
     session_destroy();
+    // Catat aktivitas logout ke dalam log
+    // Panggil fungsi logActivity dengan menyertakan koneksi PDO dan aktivitas
+    logActivity($pdo, "User logged out",$username);
+
     // Redirect ke halaman login.php
     header("Location: ../login.php");
     exit();
 }
 
+// Check if the user is already logged in
+if (isset($_SESSION['username'])) {
+    // Mendapatkan peran pengguna dari sesi
+    $username = $_SESSION['username'];
+    $role_sql = "SELECT role FROM tb_user WHERE username = '$username'";
+    $role_result = $conn->query($role_sql);
 
-// Handle form submission for updating user details
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_user'])) {
-    $username = $_POST['edit_username'];
-    $fullname = $_POST['edit_fullname'];
-    $email = $_POST['edit_email'];
-    // Add more fields as needed
+    if ($role_result->num_rows == 1) {
+        $role_row = $role_result->fetch_assoc();
+        $role = $role_row["role"];
 
-    // Update user data in the database
-    $stmt = $pdo->prepare("UPDATE tb_user SET fullname = ?, email = ? WHERE username = ?");
-    $stmt->execute([$fullname, $email, $username]);
+        // Redirect user based on role
+        if ($role === 'kurir') {
+            header("Location: /kurir.php");
+            exit();
+        } elseif ($role === 'pengguna') {
+            header("Location: ../berhasil_login.php");
+            exit();
+        }
+    }
+}
 
-    // Redirect back to the daftar_user page after update
-    header("Location: admin.php?action=daftar_user");
+// Fungsi untuk menghapus barang
+function deleteItem($pdo, $itemId,$username) {
+    $stmt = $pdo->prepare("DELETE FROM products WHERE id_produk = ?");
+    $stmt->execute([$itemId]);
+    // Catat aktivitas penghapusan barang ke dalam log
+    logActivity($pdo,"Deleted item with ID: $itemId",$username);
+}
+
+// Proses form delete barang
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete_item'])) {
+    $itemId = $_POST['id_produk'];
+    deleteItem($pdo, $itemId,$username);
+    header("Location:  admin.php?action=daftar_barang");
     exit();
 }
+
+
+
 // Ambil data semua user
 $users = getUsers($pdo);
 
@@ -43,6 +74,8 @@ function getUsers($pdo) {
 function deleteUser($pdo, $username) {
     $stmt = $pdo->prepare("DELETE FROM tb_user WHERE username = ?");
     $stmt->execute([$username]);
+    // Catat aktivitas penghapusan pengguna ke dalam log
+    logActivity($pdo,"Deleted user: $username",$username);
 }
 
 // Proses form delete user
@@ -52,6 +85,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete_user'])) {
     header("Location:  admin.php?action=daftar_user");
     exit();
 }
+
 // Fungsi untuk menambahkan saldo
 function addBalance($pdo, $username, $amount) {
     // Ambil saldo user
@@ -66,6 +100,8 @@ function addBalance($pdo, $username, $amount) {
     // Update saldo user
     $stmt = $pdo->prepare("UPDATE tb_user SET saldo = ? WHERE username = ?");
     $stmt->execute([$newBalance, $username]);
+    // Catat aktivitas penambahan saldo ke dalam log
+    logActivity($pdo,"Added balance ($amount) to user: $username",$username);
 }
 
 // Proses form tambah saldo
@@ -105,6 +141,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_user'])) {
         if (mysqli_query($conn, $sql)) {
             // Jika pendaftaran berhasil, arahkan pengguna ke halaman berhasil_login.php
             header("Location: admin.php?action=daftar_user");
+            // Catat aktivitas penambahan pengguna ke dalam log
+            logActivity($pdo,"Added new user: $username",$username);
             exit();
         } else {
             // Jika terjadi kesalahan, tampilkan pesan error
@@ -114,7 +152,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_user'])) {
 }
 
 
-
 // Fungsi untuk mengambil data semua barang
 function getItems($pdo) {
     $stmt = $pdo->prepare("SELECT * FROM products");
@@ -122,26 +159,6 @@ function getItems($pdo) {
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-
-
-// Proses form update user
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_user'])) {
-    $username = $_POST['edit_username'];
-    $fullname = $_POST['edit_fullname'];
-    $email = $_POST['edit_email'];
-    $phone = $_POST['edit_phone'];
-    $role = $_POST['edit_role'];
-    $address = $_POST['edit_address'];
-    $saldo = $_POST['edit_saldo'];
-
-    // Update data pengguna di database
-    $stmt = $pdo->prepare("UPDATE tb_user SET fullname = ?, email = ?, phone = ?, role = ?, address = ?, saldo = ? WHERE username = ?");
-    $stmt->execute([$fullname, $email, $phone, $role, $address, $saldo, $username]);
-
-    // Redirect kembali ke halaman admin setelah update
-    header("Location: admin.php");
-    exit();
-}
 
 
 ?>
@@ -155,21 +172,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_user'])) {
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body class="font-sans">
+<body class="font-sans bg-[#FFF6F6]">
 
 <div class="flex">
 <!-- Sidebar -->
-<div class="flex flex-col justify-between bg-gray-800 text-white w-1/5 min-h-screen max-h-full py-6 px-4">
+<div class="flex flex-col justify-between bg-white border-2 text-black w-1/5 min-h-screen max-h-full py-6 font-serif">
         <div>
-            <h1 class="text-[34px] font-serif text-bold">MS STORE</h1>
-            <a href="?action=daftar_user" class="block py-2 px-4 text-white hover:bg-gray-700">Daftar User</a>
-            <a href="?action=daftar_barang" class="block py-2 px-4 text-white hover:bg-gray-700">Daftar Barang</a>
-            <a href="?action=tambah_user" class="block py-2 px-4 text-white hover:bg-gray-700">Tambah User</a>
+            <h1 class="text-[34px] font-serif text-bold px-2">MS STORE</h1>
+            <a href="?action=daftar_user" class="block py-2 px-4 text-black hover:bg-gray-300">Daftar User</a>
+            <a href="?action=daftar_barang" class="block py-2 px-4 text-black hover:bg-gray-300">Daftar Barang</a>
+            <a href="?action=tambah_user" class="block py-2 px-4 text-black hover:bg-gray-300">Tambah User</a>
+            <a href="?action=daftar_status" class="block py-2 px-4 text-black hover:bg-gray-300">Daftar Status</a>
+            <a href="?action=logs" class="block py-2 px-4 text-black hover:bg-gray-300">Logs</a>
+            <form method="post" action="" class="mt-[50px]">
+                <button type="submit" name="logout" class="block py-2 px-4 w-10/12 ml-2 rounded-lg text-black bg-[#FF8787] hover:bg-red-700">Logout</button>
+            </form>
         </div>
         <!-- Logout Button -->
-        <form method="post" action="" class="mt-auto">
-            <button type="submit" name="logout" class="block py-2 px-4 w-full text-white bg-red-500 hover:bg-red-700">Logout</button>
-        </form>
+
     </div>
 
 
@@ -197,7 +217,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_user'])) {
                     break;
                 case 'edit_user':
                     include 'edit_user.php'; // You can create tambah_saldo.php for adding balance to users
-                    break;         
+                    break;
+                case 'edit_barang':
+                    include 'edit_barang.php'; // You can create tambah_saldo.php for adding balance to users
+                    break;
+                case 'daftar_status':
+                    include 'daftar_status.php'; // Buat daftar_status.php untuk menampilkan daftar status pesanan
+                    break;
+                case 'logs':
+                    include 'logs.php'; // Buat logs.php untuk menampilkan log aktivitas
+                    break;
+                    
                 default:
                     // Default content if no action is specified
                     echo "Select a menu item from the sidebar.";

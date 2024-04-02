@@ -1,27 +1,31 @@
 <?php
 session_start();
-include "config.php";
+include "user/config.php";
 
-// Lakukan koneksi ke database, misalnya dengan menggunakan mysqli atau PDO
 
 // Check if the user is already logged in
 if (isset($_SESSION['username'])) {
-    header("Location: berhasil_login.php");
-    exit();
-}
+    // Mendapatkan peran pengguna dari sesi
+    $username = $_SESSION['username'];
+    $role_sql = "SELECT role FROM tb_user WHERE username = '$username'";
+    $role_result = $conn->query($role_sql);
 
-// Konfigurasi koneksi
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "db_ecommerce";
+    if ($role_result->num_rows == 1) {
+        $role_row = $role_result->fetch_assoc();
+        $role = $role_row["role"];
 
-// Membuat koneksi
-$conn = new mysqli($servername, $username, $password, $dbname);
+        // Redirect user based on role
+        if ($role === 'kurir') {
+            header("Location: kurir/kurir.php");
+            exit();
+        } elseif ($role === 'admin') {
+            header("Location: admin/admin.php?action=daftar_user");
+            exit();
+        }
+        header("Location: user/berhasil_login.php");
+        exit();
 
-// Memeriksa koneksi
-if ($conn->connect_error) {
-    die("Koneksi gagal: " . $conn->connect_error);
+    }
 }
 
 // Mengecek apakah pengguna telah mengirimkan formulir login
@@ -32,55 +36,72 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $remember_me = isset($_POST["remember_me"]) ? true : false;
 
     // Query untuk memeriksa apakah informasi login yang diberikan cocok dengan data di database
-    $sql = "SELECT * FROM tb_user WHERE username = '$username' AND password = '$password'";
-    $result = $conn->query($sql);
+    $sql = "SELECT username, password FROM tb_user WHERE username = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
     if ($result->num_rows == 1) {
-        // Login berhasil
-        $_SESSION["username"] = $username;
+        $row = $result->fetch_assoc();
+        $hashed_password = $row["password"];
 
-        // Set cookie "Remember Me" jika dicentang
-        if ($remember_me) {
-            $token = bin2hex(random_bytes(16)); // Hasilkan token acak
-            
-            // Simpan token di database untuk identifikasi pengguna
-            $sql = "UPDATE tb_user SET remember_token = '$token' WHERE username = '$username'";
-            $conn->query($sql);
+        // Verifikasi password
+        if (password_verify($password, $hashed_password)) {
+            // Login berhasil
+            $_SESSION["username"] = $username;
 
-            // Set cookie pada sisi klien
-            setcookie("remember_token", $token, time() + (30 * 24 * 60 * 60), "/"); // 30 hari kedaluwarsa
-        }
+            // Set cookie "Remember Me" jika dicentang
+            if ($remember_me) {
+                $token = bin2hex(random_bytes(16)); // Hasilkan token acak
+                
+                // Simpan token di database untuk identifikasi pengguna
+                $token_sql = "UPDATE tb_user SET remember_token = ? WHERE username = ?";
+                $token_stmt = $conn->prepare($token_sql);
+                $token_stmt->bind_param("ss", $token, $username);
+                $token_stmt->execute();
 
-        // Periksa peran pengguna dari database
-        $role_sql = "SELECT role FROM tb_user WHERE username = '$username'";
-        $role_result = $conn->query($role_sql);
-
-        if ($role_result->num_rows == 1) {
-            $role_row = $role_result->fetch_assoc();
-            $role = $role_row["role"];
-
-            // Redirect user based on role
-            if ($role === 'kurir') {
-                header("Location: kurir.php");
-                exit();
-            
-            } elseif ($role === 'admin') {
-                header("Location: admin/admin.php?action=daftar_user");
-                exit();
+                // Set cookie pada sisi klien
+                setcookie("remember_token", $token, time() + (30 * 24 * 60 * 60), "/"); // 30 hari kedaluwarsa
             }
-        }
 
-        header("Location: berhasil_login.php"); // Redirect ke halaman utama setelah login berhasil
-        exit();
+            // Redirect ke halaman utama setelah login berhasil
+            header("Location: user/berhasil_login.php");
+            exit();
+        } else {
+            // Login gagal
+            $error_message = "Username atau password salah. Silakan coba lagi.";
+        }
     } else {
         // Login gagal
         $error_message = "Username atau password salah. Silakan coba lagi.";
     }
 }
 
+if (isset($_POST['login'])) {
+    $username = $_POST['username'];
+    $password = $_POST['password'];
+
+    $result = mysqli_query($conn, "SELECT * FROM tb_user WHERE username='$username'");
+    $row = mysqli_fetch_assoc($result);
+
+    if ($row) {
+        $hashed_password = $row['password'];
+        
+        if (password_verify($password, $hashed_password)) {
+            $_SESSION['username'] = $username;
+            header('Location: user/berhasil_login.php');
+            exit();
+        } else {
+        }
+    } else {
+    }
+}
+
 // Tutup koneksi ke database
 $conn->close();
 ?>
+
 
 
 <!DOCTYPE html>
@@ -125,7 +146,7 @@ $conn->close();
                 <a href="lupa_sandi.php" class="text-sm text-purple-600">Lupa Sandi?</a>
             </div>
             <button type="submit"
-                class="bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 w-full">
+                name="login" class="bg-purple-600  text-white py-2 rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 w-full">
                 Login
             </button>
             <div class="text-center">
@@ -140,6 +161,8 @@ $conn->close();
         }
         ?>
     </div>
+
+    
 </body>
 
 <!-- ... (remaining code) ... -->

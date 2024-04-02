@@ -23,8 +23,6 @@ use Twilio\Rest\FlexApi\V1\ChannelList;
 use Twilio\Rest\FlexApi\V1\ConfigurationList;
 use Twilio\Rest\FlexApi\V1\FlexFlowList;
 use Twilio\Rest\FlexApi\V1\InsightsAssessmentsCommentList;
-use Twilio\Rest\FlexApi\V1\InsightsConversationalAiList;
-use Twilio\Rest\FlexApi\V1\InsightsConversationalAiReportInsightsList;
 use Twilio\Rest\FlexApi\V1\InsightsConversationsList;
 use Twilio\Rest\FlexApi\V1\InsightsQuestionnairesList;
 use Twilio\Rest\FlexApi\V1\InsightsQuestionnairesCategoryList;
@@ -35,6 +33,12 @@ use Twilio\Rest\FlexApi\V1\InsightsSettingsAnswerSetsList;
 use Twilio\Rest\FlexApi\V1\InsightsSettingsCommentList;
 use Twilio\Rest\FlexApi\V1\InsightsUserRolesList;
 use Twilio\Rest\FlexApi\V1\InteractionList;
+use Twilio\Rest\FlexApi\V1\PluginList;
+use Twilio\Rest\FlexApi\V1\PluginArchiveList;
+use Twilio\Rest\FlexApi\V1\PluginConfigurationList;
+use Twilio\Rest\FlexApi\V1\PluginConfigurationArchiveList;
+use Twilio\Rest\FlexApi\V1\PluginReleaseList;
+use Twilio\Rest\FlexApi\V1\PluginVersionArchiveList;
 use Twilio\Rest\FlexApi\V1\ProvisioningStatusList;
 use Twilio\Rest\FlexApi\V1\WebChannelList;
 use Twilio\Version;
@@ -45,8 +49,6 @@ use Twilio\Version;
  * @property ConfigurationList $configuration
  * @property FlexFlowList $flexFlow
  * @property InsightsAssessmentsCommentList $insightsAssessmentsComment
- * @property InsightsConversationalAiList $insightsConversationalAi
- * @property InsightsConversationalAiReportInsightsList $insightsConversationalAiReportInsights
  * @property InsightsConversationsList $insightsConversations
  * @property InsightsQuestionnairesList $insightsQuestionnaires
  * @property InsightsQuestionnairesCategoryList $insightsQuestionnairesCategory
@@ -57,6 +59,12 @@ use Twilio\Version;
  * @property InsightsSettingsCommentList $insightsSettingsComment
  * @property InsightsUserRolesList $insightsUserRoles
  * @property InteractionList $interaction
+ * @property PluginList $plugins
+ * @property PluginArchiveList $pluginArchive
+ * @property PluginConfigurationList $pluginConfigurations
+ * @property PluginConfigurationArchiveList $pluginConfigurationArchive
+ * @property PluginReleaseList $pluginReleases
+ * @property PluginVersionArchiveList $pluginVersionArchive
  * @property ProvisioningStatusList $provisioningStatus
  * @property WebChannelList $webChannel
  * @method \Twilio\Rest\FlexApi\V1\ChannelContext channel(string $sid)
@@ -66,6 +74,9 @@ use Twilio\Version;
  * @method \Twilio\Rest\FlexApi\V1\InsightsQuestionnairesCategoryContext insightsQuestionnairesCategory(string $categorySid)
  * @method \Twilio\Rest\FlexApi\V1\InsightsQuestionnairesQuestionContext insightsQuestionnairesQuestion(string $questionSid)
  * @method \Twilio\Rest\FlexApi\V1\InteractionContext interaction(string $sid)
+ * @method \Twilio\Rest\FlexApi\V1\PluginContext plugins(string $sid)
+ * @method \Twilio\Rest\FlexApi\V1\PluginConfigurationContext pluginConfigurations(string $sid)
+ * @method \Twilio\Rest\FlexApi\V1\PluginReleaseContext pluginReleases(string $sid)
  * @method \Twilio\Rest\FlexApi\V1\WebChannelContext webChannel(string $sid)
  */
 class V1 extends Version
@@ -75,8 +86,6 @@ class V1 extends Version
     protected $_configuration;
     protected $_flexFlow;
     protected $_insightsAssessmentsComment;
-    protected $_insightsConversationalAi;
-    protected $_insightsConversationalAiReportInsights;
     protected $_insightsConversations;
     protected $_insightsQuestionnaires;
     protected $_insightsQuestionnairesCategory;
@@ -87,6 +96,12 @@ class V1 extends Version
     protected $_insightsSettingsComment;
     protected $_insightsUserRoles;
     protected $_interaction;
+    protected $_plugins;
+    protected $_pluginArchive;
+    protected $_pluginConfigurations;
+    protected $_pluginConfigurationArchive;
+    protected $_pluginReleases;
+    protected $_pluginVersionArchive;
     protected $_provisioningStatus;
     protected $_webChannel;
 
@@ -139,22 +154,6 @@ class V1 extends Version
             $this->_insightsAssessmentsComment = new InsightsAssessmentsCommentList($this);
         }
         return $this->_insightsAssessmentsComment;
-    }
-
-    protected function getInsightsConversationalAi(): InsightsConversationalAiList
-    {
-        if (!$this->_insightsConversationalAi) {
-            $this->_insightsConversationalAi = new InsightsConversationalAiList($this);
-        }
-        return $this->_insightsConversationalAi;
-    }
-
-    protected function getInsightsConversationalAiReportInsights(): InsightsConversationalAiReportInsightsList
-    {
-        if (!$this->_insightsConversationalAiReportInsights) {
-            $this->_insightsConversationalAiReportInsights = new InsightsConversationalAiReportInsightsList($this);
-        }
-        return $this->_insightsConversationalAiReportInsights;
     }
 
     protected function getInsightsConversations(): InsightsConversationsList
@@ -235,6 +234,54 @@ class V1 extends Version
             $this->_interaction = new InteractionList($this);
         }
         return $this->_interaction;
+    }
+
+    protected function getPlugins(): PluginList
+    {
+        if (!$this->_plugins) {
+            $this->_plugins = new PluginList($this);
+        }
+        return $this->_plugins;
+    }
+
+    protected function getPluginArchive(): PluginArchiveList
+    {
+        if (!$this->_pluginArchive) {
+            $this->_pluginArchive = new PluginArchiveList($this);
+        }
+        return $this->_pluginArchive;
+    }
+
+    protected function getPluginConfigurations(): PluginConfigurationList
+    {
+        if (!$this->_pluginConfigurations) {
+            $this->_pluginConfigurations = new PluginConfigurationList($this);
+        }
+        return $this->_pluginConfigurations;
+    }
+
+    protected function getPluginConfigurationArchive(): PluginConfigurationArchiveList
+    {
+        if (!$this->_pluginConfigurationArchive) {
+            $this->_pluginConfigurationArchive = new PluginConfigurationArchiveList($this);
+        }
+        return $this->_pluginConfigurationArchive;
+    }
+
+    protected function getPluginReleases(): PluginReleaseList
+    {
+        if (!$this->_pluginReleases) {
+            $this->_pluginReleases = new PluginReleaseList($this);
+        }
+        return $this->_pluginReleases;
+    }
+
+    protected function getPluginVersionArchive(): PluginVersionArchiveList
+    {
+        if (!$this->_pluginVersionArchive) {
+            $this->_pluginVersionArchive = new PluginVersionArchiveList($this);
+        }
+        return $this->_pluginVersionArchive;
     }
 
     protected function getProvisioningStatus(): ProvisioningStatusList

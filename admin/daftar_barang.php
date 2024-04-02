@@ -1,13 +1,18 @@
-<!-- daftar_barang.php -->
+<!-- Daftar Barang -->
+<?php
+
+?>
 <div>
     <h3 class="text-xl font-semibold mb-2">Daftar Barang</h3>
     
-    <!-- Input pencarian -->
-    <input type="text" id="searchInput" onkeyup="searchProducts()" placeholder="Cari nama barang..." class="border p-2 mb-4">
+    <div class="w-full  mx-auto flex justify-center">
 
+    <!-- Input pencarian -->
+    <input type="text" id="searchInput" onkeyup="searchProducts()" placeholder="Cari nama barang..." class="border-2 w-10/12 rounded-lg p-2 mb-4">
+    </div>
     <?php $items = getItems($pdo); ?>
     <?php foreach ($items as $item): ?>
-        <div class="border p-4 mb-4 product-item">
+        <div class="border-2 p-4 mb-4 product-item bg-white rounded-lg">
             <!-- Product photo -->
             <?php
             $image_path = '../barang/' . $item['photo']; // Path to the product photo folder
@@ -19,10 +24,22 @@
             ?>
 
             <!-- Product details -->
-            <p><strong>Name:</strong> <?php echo $item['name']; ?></p>
-            <p><strong>Price:</strong> <?php echo $item['price']; ?></p>
-            <p><strong>Store Name:</strong> <?php echo $item['store_name']; ?></p>
+            <p><strong>Nama:</strong> <?php echo $item['name']; ?></p>
+            <p style="display:none;"><strong>ID Produk:</strong> <?php echo $item['id_produk']; ?></p>
+            <p><strong>Harga:</strong> <?php echo $item['price']; ?></p>
+            <p><strong>Nama Toko:</strong> <?php echo $item['store_name']; ?></p>
             <!-- Add more product details as needed -->
+
+            <!-- Tombol Edit dan Delete -->
+            <div class="mt-4">
+                <form method="post" action="admin.php" class="inline-block">
+                    <input type="hidden" name="id_produk" value="<?php echo $item['id_produk']; ?>">
+                    <button type="submit" name="delete_item" class="bg-red-500 text-white rounded-lg py-2 px-4 mt-2 mr-2">Delete User</button>
+                </form>
+                <a href="admin.php?action=edit_barang&name=<?php echo $item['name']; ?>" class="bg-blue-500 rounded-lg text-white py-2 px-4 mt-2 inline-block">Edit Barang</a>
+            
+            </div>
+
         </div>
     <?php endforeach; ?>
 </div>

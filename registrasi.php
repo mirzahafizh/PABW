@@ -1,5 +1,5 @@
 <?php
-include 'config.php'; // Include file konfigurasi untuk koneksi ke database
+include 'user/config.php'; // Include file konfigurasi untuk koneksi ke database
 session_start(); // Mulai sesi
 
 // Periksa jika pengguna sudah login, maka arahkan ke halaman berhasil_login.php
@@ -19,6 +19,8 @@ if (isset($_POST['submit'])) {
     $confirm_password = $_POST['confirm_password'];
     $role = $_POST['jenis-akun']; // Ambil jenis akun dari formulir
 
+    $hash = password_hash($password, PASSWORD_DEFAULT);
+
     // Pengecekan apakah email berakhiran @gmail.com
     if (!preg_match("/@gmail\.com$/", $email)) {
         echo "<script>alert('Maaf, hanya email dengan akhiran Gmail yang diizinkan untuk registrasi!')</script>";
@@ -37,9 +39,11 @@ if (isset($_POST['submit'])) {
         } elseif ($password !== $confirm_password) {
             echo "<script>alert('Password dan konfirmasi password harus sama!')</script>";
         } else {
+            // Meng-hash password sebelum menyimpannya ke dalam database
+
             // Jika semua validasi berhasil, lanjutkan dengan pendaftaran
             // Query untuk menambahkan data pengguna baru ke database
-            $sql = "INSERT INTO tb_user (fullname, email, phone, username, password, role) VALUES ('$fullname', '$email', '$phone', '$username', '$password', '$role')";
+            $sql = "INSERT INTO tb_user (fullname, email, phone, username, password, role) VALUES ('$fullname', '$email', '$phone', '$username', '$hash', '$role')";
 
             // Jalankan query
             if (mysqli_query($conn, $sql)) {

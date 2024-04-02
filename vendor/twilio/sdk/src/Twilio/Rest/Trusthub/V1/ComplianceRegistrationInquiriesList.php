@@ -118,6 +118,22 @@ class ComplianceRegistrationInquiriesList extends ListResource
                 $options['fileName'],
             'File' =>
                 $options['file'],
+            'FirstName' =>
+                $options['firstName'],
+            'LastName' =>
+                $options['lastName'],
+            'DateOfBirth' =>
+                $options['dateOfBirth'],
+            'IndividualEmail' =>
+                $options['individualEmail'],
+            'IndividualPhone' =>
+                $options['individualPhone'],
+            'IsIsvEmbed' =>
+                Serialize::booleanToString($options['isIsvEmbed']),
+            'IsvRegisteringForSelfOrTenant' =>
+                $options['isvRegisteringForSelfOrTenant'],
+            'StatusCallbackUrl' =>
+                $options['statusCallbackUrl'],
         ]);
 
         $payload = $this->version->create('POST', $this->uri, [], $data);
